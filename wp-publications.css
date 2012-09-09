@@ -1,0 +1,22 @@
+.purebibtex {
+  font-family: monospace;
+  font-size: small;
+  border: 1px solid #DDDDDD;
+  white-space:pre;
+  background: none repeat scroll 0 0 #F5F5F5;  
+  padding:10px;
+}
+.bibentry-by { font-style: italic; }
+.bibentry-abstract { margin:15px; }
+.bibentry-label { margin-top:15px; }
+.bibentry-reference { 
+  margin-bottom:15px; 
+  padding:10px; 
+  background: none repeat scroll 0 0 #F5F5F5; 
+  border: 1px solid #DDDDDD; 
+}
+.header {
+  font-size: 120%;
+  font-weight: bold;
+  padding: 1px 2px 1px 2px;
+}
