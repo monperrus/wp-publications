@@ -216,7 +216,8 @@ class WP_BibtexBrowser {
       }
     }
     ob_start();
-    new Dispatcher();
+    $x = new Dispatcher();
+    $x->main();
     return ob_get_clean();   
   } // end function
   
