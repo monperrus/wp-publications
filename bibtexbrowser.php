@@ -47,7 +47,6 @@ function c($key) { // shortcut
 // the changes that require existing bibtexbrowser symbols should be in bibtexbrowser.after.php (included at the end of this file)
 // per bibtex file configuration
 @include('bibtexbrowser.local.php');
-@include(preg_replace('/\.php$/','.local.php',__FILE__));
 
 // the encoding of your bibtex file
 @define('BIBTEX_INPUT_ENCODING','UTF-8');//@define('BIBTEX_INPUT_ENCODING','iso-8859-1');//define('BIBTEX_INPUT_ENCODING','windows-1252');
@@ -998,6 +997,21 @@ function latex2html($line, $do_clean_extra_bracket=true) {
   // added && strpos($line,'{')===false
   if (strpos($line,'\\')===false && strpos($line,'{')===false) return $line;
 
+  // handling uppercase
+  //  echo preg_replace_callback('!\b[a-z]!', 'upper', strtolower($str));
+  if (!function_exists("strtolowercallback")) {
+    function strtolowercallback($array) {
+      return strtolower($array[1]);
+    }
+  }
+  if (!function_exists("strtouppercallback")) {
+    function strtouppercallback($array) {
+      return strtoupper($array[1]);
+    }
+  }
+  $line = preg_replace_callback('/\\\\uppercase\{(.*)\}/U',"strtouppercallback", $line);
+  $line = preg_replace_callback('/\\\\lowercase\{(.*)\}/U',"strtolowercallback", $line);
+
   $maths = array();
   $index = 0;
   // first we escape the math env
@@ -1087,6 +1101,8 @@ function latex2html($line, $do_clean_extra_bracket=true) {
   
   // handling \textsubscript{....} FAILS if there still are nested {}
   $line = preg_replace('/\\\\textsubscript\{(.*)\}/U','<sub>\\1</sub>', $line);
+
+
 
   if ($do_clean_extra_bracket) {
     // clean extra tex curly brackets, usually used for preserving capitals
@@ -1980,7 +1996,38 @@ class BibEntry {
     return $matches;
   }
 
-} // enc class BibEntry
+  /** returns in the citation file format, tailored for github */
+  function toCFF() {
+    $result = "";
+    $result .= "cff-version: 1.2.0"."\n";
+    $result .= "# CITATION.cff created with https://github.com/monperrus/bibtexbrowser/"."\n";
+    $result .= "preferred-citation:"."\n";
+    $result .= "  title: \"".$this->getTitle()."\""."\n";
+    if ($this->hasField("doi")) {
+        $result .= "  doi: \"".$this->getField("doi")."\""."\n";
+    }
+    if ($this->hasField("year")) {
+        $result .= "  year: \"".$this->getField("year")."\""."\n";
+    }
+    if ($this->hasField("journal")) {
+        $result .= "  type: article\n";
+        $result .= "  journal: \"".$this->getField("journal")."\""."\n";
+    }
+    if ($this->hasField("booktitle")) {
+        $result .= "  type: conference-paper\n";
+        $result .= "  conference: \"".$this->getField("booktitle")."\""."\n";
+    }
+    $result .= "  authors:"."\n";
+    foreach ($this->getFormattedAuthorsArray() as $author) {
+        $split = splitFullName($author);
+        $result .= "    - family-names: ".$split[1]."\n";
+        $result .= "      given-names: ".$split[0]."\n";
+    }
+    return $result;
+  }
+  
+  
+} // end class BibEntry
 
 class RawBibEntry extends BibEntry {
   function setField($name, $value) {
@@ -2422,7 +2469,7 @@ function JanosBibliographyStyle($bibentry) {
   }
 
   if ($type=="article" && $bibentry->hasField("journal")) {
-      $booktitle = '<span class="bibbooktitle">'.'In '.$bibentry->getField("journal").'</span>';
+      $booktitle = '<span class="bibbooktitle">'.''.$bibentry->getField("journal").'</span>';
   }
 
 
@@ -2744,12 +2791,16 @@ $('a.biburl').each(function() { // for each url "[bibtex]"
 if (!function_exists('javascript_math')) {
   function javascript_math() {
     ?>
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({
-        tex2jax: {inlineMath: [["$","$"]]}
-      });
-    </script>
-    <script src="<?php echo MATHJAX_URI ?>"></script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
     <?php
   }
 }
